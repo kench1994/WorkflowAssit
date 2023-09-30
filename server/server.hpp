@@ -1,6 +1,6 @@
 #pragma once
 #pragma once
-#include "czmq.h"
+#include <czmq.h>
 #include <string>
 #include <thread>
 #include <memory>
@@ -51,8 +51,9 @@ public:
 		// });
 		// work_trd_sptr_->detach();
 	}
-// protected:
-	void work() {
+
+	void work() 
+	{
 		zmq_pollitem_t items[] = {
 			{ zmq_sock_front_ptr_, 0, ZMQ_POLLIN, 0 },
 			{ zmq_sock_backend_ptr_,  0, ZMQ_POLLIN, 0 },
@@ -70,21 +71,30 @@ public:
 		if (items[2].revents & ZMQ_POLLIN) {
 			//  DEALER套接字将信封和消息内容一起返回给我们
 			zmsg_t* msg = zmsg_recv(zmq_sock_worker_ptr_);
-			//TODO:解耦事件处理
-			zframe_print(zmsg_last(msg), "server recv");
-			//fprintf(stdout, zmsg_dump());
-			zframe_t* address = zmsg_pop(msg);
-			zframe_t* content = zmsg_pop(msg);
-			assert(content);
-			zmsg_destroy(&msg);
 
-			zframe_send(&address, zmq_sock_worker_ptr_, ZFRAME_REUSE + ZFRAME_MORE);
-			zframe_send(&content, zmq_sock_worker_ptr_, ZFRAME_REUSE);
-
-			zframe_destroy(&address);
-			zframe_destroy(&content);
+			// TODO: 事件框架中处理 msg
+			msg_handler(msg);
 		}
 	}
+protected:
+	void msg_handler(zmsg_t* msg)
+	{
+		zframe_t* address = zmsg_pop(msg);
+		zframe_t* content = zmsg_pop(msg);
+		
+		fprintf(stdout, "{s} recv <%p> : [%s]\n", msg, zframe_data(content));
+
+		zframe_t* reply_content = zframe_new("220\0", strlen("220\0"));
+		zframe_send(&address, zmq_sock_worker_ptr_, ZFRAME_REUSE + ZFRAME_MORE);
+		zframe_send(&reply_content, zmq_sock_worker_ptr_, ZFRAME_REUSE);
+
+		zframe_destroy(&address);
+		zframe_destroy(&content);
+		zframe_destroy(&reply_content);
+
+		zmsg_destroy(&msg);
+	}
+
 private:
 	std::string listen_host_;
 	void* zmq_ctx_ptr_;

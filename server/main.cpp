@@ -63,20 +63,20 @@ int install_signals()
 
 int main(int argc, char** argv)
 {
-	daemonize();
+	// daemonize();
 
-	server s("tcp://*:5570");
+	server s("tcp://*:5557");
 	s.initial();
 
 
-    openlog("worker_assit", LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+    // openlog("worker_assit", LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 
-    // set up signal handler
-    if (install_signals() != 0)
-    {
-        syslog(LOG_ERR, "register_signals failed");
-        exit(EXIT_FAILURE);
-    }
+    // // set up signal handler
+    // if (install_signals() != 0)
+    // {
+    //     syslog(LOG_ERR, "register_signals failed");
+    //     exit(EXIT_FAILURE);
+    // }
 
     while (1)
     {
